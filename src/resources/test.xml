@@ -1,0 +1,28 @@
+<!-- work related -->
+<pricing>
+  cd ~/Project/Work/pricing-system
+  <edit>
+    $EDITOR
+  </edit>
+  <term>
+      <build>
+      </build>
+      <test>
+        mvn test
+      </test>
+  </term>
+</pricing>
+<!-- non work related -->
+<play>
+  cd ~/Project/Work
+  <edit>
+    $EDITOR
+  </edit>
+  <term>
+      <build>
+      </build>
+      <test>
+        mvn test
+      </test>
+  </term>
+</work>

@@ -1,0 +1,8 @@
+[package]
+name = "trust"
+version = "0.1.0"
+authors = ["Luke Collier <leccollier@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+quick-xml = "0.14.0"
