@@ -25,4 +25,17 @@
         mvn test
       </test>
   </term>
-</work>
+</play>
+<rust>
+  cd ~/Project/Work
+  <edit>
+    $EDITOR
+  </edit>
+  <term>
+      <build>
+      </build>
+      <test>
+        mvn test
+      </test>
+  </term>
+</rust>

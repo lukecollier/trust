@@ -47,28 +47,37 @@ fn get_tmux_type(depth: &u8) -> TmuxType {
     }
 }
 
-fn handle_event<'a>(event: Event<'a>) -> () {
-    let mut depth = 0;
-    let mut previous_depth = 0;
-    let mut children: Vec<Pane> = Vec::new();
+struct State {
+    depth: u8,
+    prev_depth: u8,
+    children: Vec<Pane>
+}
+
+impl State {
+    fn new() -> State {
+        State { depth: 0, prev_depth: 0, children: Vec::new() }
+    }
+}
+
+fn handle_event<'a>(event: Event<'a>, state: &mut State) -> () {
     match event {
         Event::Start(ref _e) => {
-            previous_depth = depth.clone();
-            depth += 1;
+            state.prev_depth = state.depth.clone();
+            state.depth += 1;
         },
         Event::Text(ref _e) => {
             ()
         },
         Event::End(ref e) => {
-            depth -= 1;
+            state.depth -= 1;
             let name = String::from(str::from_utf8(e.name()).unwrap());
-            if previous_depth <= depth {
-                children.push(Pane::new(name));
+            if state.prev_depth <= state.depth {
+                state.children.push(Pane::new(name));
             } else {
                 let mut parent = Pane::new(name);
-                let children_add = children.split_off(0);
+                let children_add = state.children.split_off(0);
                 parent.push_all(children_add);
-                children.push(parent);
+                state.children.push(parent);
             }
         },
         _ => {()}
@@ -80,40 +89,20 @@ fn main() {
     let mut reader = Reader::from_file(path).expect("failed to read");
     reader.trim_text(true);
 
-    let mut depth = 0;
-    let mut previous_depth = 0;
-    let mut txt = Vec::new();
     let mut buf = Vec::new();
 
-    let mut children: Vec<Pane> = Vec::new();
+    let mut state = State::new();
+
     loop {
         match reader.read_event(&mut buf) {
-            Ok(Event::Start(ref _e)) => {
-                previous_depth = depth.clone();
-                depth += 1;
-            },
-            Ok(Event::End(ref e)) => { 
-                depth -= 1;
-                let name = String::from(str::from_utf8(e.name()).unwrap());
-                if previous_depth <= depth {
-                    // println!("panel: {} at ({},{})", str::from_utf8(e.name()).unwrap(), depth, previous_depth);
-                    children.push(Pane::new(name));
-                } else {
-                    let mut parent = Pane::new(name);
-                    // println!("creating panel {} at depth {} with children {:?}", str::from_utf8(e.name()).unwrap(), depth, children);
-                    let children_add = children.split_off(0);
-                    parent.push_all(children_add);
-                    children.push(parent);
-                }
-            },
-            Ok(Event::Text(e)) => txt.push(e.unescape_and_decode(&reader).unwrap()), // todo convert text to commands seperated by new lines
-            Ok(Event::Eof) => break, // exits the loop when reaching end of file
-            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
-            _ => ()
+            Ok(Event::Eof) => break,
+            Ok(event) => handle_event(event, &mut state), 
+            Err(error) => panic!("Error at position {}: {:?}", reader.buffer_position(), error),
         }
 
         // if we don't keep a borrow elsewhere, we can clear the buffer to keep memory usage low
         buf.clear();
     }
-    println!("root elements {:?}", children);
+    println!("work {:?}", state.children);
+
 }
