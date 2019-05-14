@@ -1,4 +1,3 @@
-<!-- work related -->
 <pricing>
   cd ~/Project/Work/pricing-system
   <edit>
@@ -12,7 +11,6 @@
       </test>
   </term>
 </pricing>
-<!-- non work related -->
 <play>
   cd ~/Project/Work
   <edit>
@@ -26,16 +24,3 @@
       </test>
   </term>
 </play>
-<rust>
-  cd ~/Project/Work
-  <edit>
-    $EDITOR
-  </edit>
-  <term>
-      <build>
-      </build>
-      <test>
-        mvn test
-      </test>
-  </term>
-</rust>
