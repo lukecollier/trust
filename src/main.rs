@@ -5,15 +5,38 @@ use std::path::Path;
 use std::str;
 use std::fmt;
 
+#[derive(Debug,Clone)]
+struct Session {
+    windows: Vec<Window>,
+    name: String,
+}
+impl Session {
+    fn from(name: String) -> Session {
+        Session { windows: Vec::new(), name: name }
+    }
 
-struct Session<'a> {
-    windows: Vec<&'a Window<'a>>,
-    reference: [u8],
+    fn push_all(&mut self, windows: Vec<Window>) {
+        for window in windows {
+            self.windows.push(window);
+        }
+    }
 }
 
-struct Window<'a> {
-    panes: Vec<&'a Pane>,
-    title: str,
+#[derive(Debug,Clone)]
+struct Window {
+    panes: Vec<Pane>,
+    name: String,
+}
+impl Window {
+    fn from(name: String) -> Window {
+        Window { panes: Vec::new(), name: name }
+    }
+
+    fn push_all(&mut self, panes: Vec<Pane>) {
+        for pane in panes {
+            self.panes.push(pane);
+        }
+    }
 }
 
 #[derive(Debug,Clone)]
@@ -23,7 +46,7 @@ struct Pane {
     name: String
 }
 impl Pane {
-    fn new(name: String) -> Pane {
+    fn from(name: String) -> Pane {
         Pane { panes: Vec::new(), name: name, commands: Vec::new() }
     }
 
@@ -40,35 +63,12 @@ impl Pane {
     }
 }
 
-impl fmt::Display for Pane {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // write!(f, "({}, {})", self.x, self.y);
-        // the output should be as a tree that scales depending on size of console
-        unimplemented!()
-    }
-}
-
-#[derive(Debug)]
-enum TmuxType {
-    Session,
-    Pane,
-    Window
-}
-
-fn get_tmux_type(depth: &u8) -> TmuxType {
-    match depth {
-        // 0 => TmuxType::Session,
-        // 1 => TmuxType::Window,
-        // 2 => TmuxType::Pane,
-        _ => TmuxType::Pane,
-    }
-}
-
 pub struct Parser {
     depth: usize,
     prev_depth: usize,
     children: Vec<Pane>,
-    root: Vec<Pane>,
+    windows: Vec<Window>,
+    sessions: Vec<Session>,
     commands_hierarchy: Vec<Vec<String>>
 }
 
@@ -78,12 +78,11 @@ impl Parser {
             depth: 0, 
             prev_depth: 0, 
             children: Vec::new(), 
-            root: Vec::new(),
+            windows: Vec::new(), 
+            sessions: Vec::new(), 
             commands_hierarchy: Vec::new()
         }
     }
-
-    fn is_root(depth: usize) -> bool { depth == 0 }
 
     fn handle_event<'a, B: std::io::BufRead>(&mut self, event: Event<'a>, reader: &mut Reader<B>) -> () {
         match event {
@@ -98,16 +97,32 @@ impl Parser {
             Event::End(ref e) => {
                 self.depth -= 1;
                 let name = String::from(str::from_utf8(e.name()).unwrap());
-                let mut pane = Pane::new(name);
-                pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
                 if self.prev_depth <= self.depth {
-                    self.children.push(pane);
+                    if self.depth == 0 {
+                        self.sessions.push(Session::from(name));
+                    } else if self.depth == 1 {
+                        self.windows.push(Window::from(name));
+                    } else if self.depth > 1 {
+                        let mut pane = Pane::from(name);
+                        pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
+                        self.children.push(pane);
+                    }
                 } else {
-                    let children_add = self.children.split_off(0);
-                    pane.push_all(children_add);
-                    if Parser::is_root(self.depth) {
-                        self.root.push(pane);
-                    } else {
+                    if self.depth == 0 {
+                        let mut session = Session::from(name);
+                        let windows_add = self.windows.split_off(0);
+                        session.push_all(windows_add);
+                        self.sessions.push(session);
+                    } else if self.depth == 1 {
+                        let mut window = Window::from(name);
+                        let children_add = self.children.split_off(0);
+                        window.push_all(children_add);
+                        self.windows.push(window);
+                    } else if self.depth > 1 {
+                        let mut pane = Pane::from(name);
+                        let children_add = self.children.split_off(0);
+                        pane.push_all(children_add);
+                        pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
                         self.children.push(pane);
                     }
                 }
@@ -132,7 +147,7 @@ impl Parser {
         }
 
         let mut i = 0;
-        for x in &state.root {
+        for x in &state.sessions {
             i += 1;
             println!("{}: {:?}", i, x);
         }
