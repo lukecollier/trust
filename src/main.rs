@@ -19,16 +19,23 @@ struct Window<'a> {
 #[derive(Debug,Clone)]
 struct Pane {
     panes: Vec<Pane>,
+    commands: Vec<String>,
     name: String
 }
 impl Pane {
     fn new(name: String) -> Pane {
-        Pane { panes: Vec::new(), name: name }
+        Pane { panes: Vec::new(), name: name, commands: Vec::new() }
     }
 
     fn push_all(&mut self, panes: Vec<Pane>) {
         for pane in panes {
             self.panes.push(pane);
+        }
+    }
+
+    fn commands(&mut self, commands: Vec<String>) {
+        for command in commands {
+            self.commands.push(command);
         }
     }
 }
@@ -57,79 +64,85 @@ fn get_tmux_type(depth: &u8) -> TmuxType {
     }
 }
 
-struct State {
-    depth: u8,
-    prev_depth: u8,
+pub struct Parser {
+    depth: usize,
+    prev_depth: usize,
     children: Vec<Pane>,
     root: Vec<Pane>,
+    commands_hierarchy: Vec<Vec<String>>
 }
 
-impl State {
-    fn new() -> State {
-        State { 
+impl Parser {
+    fn new() -> Parser {
+        Parser { 
             depth: 0, 
             prev_depth: 0, 
             children: Vec::new(), 
-            root: Vec::new() 
+            root: Vec::new(),
+            commands_hierarchy: Vec::new()
         }
     }
-}
 
-fn is_root(depth: u8) -> bool {
-    depth == 0
-}
+    fn is_root(depth: usize) -> bool { depth == 0 }
 
-fn handle_event<'a>(event: Event<'a>, state: &mut State) -> () {
-    match event {
-        Event::Start(ref e) => {
-            println!("{} {} {}", str::from_utf8(e.name()).unwrap(), state.depth, state.prev_depth);
-            state.prev_depth = state.depth.clone();
-            state.depth += 1;
-        },
-        Event::Text(ref _e) => { () },
-        Event::End(ref e) => {
-            state.depth -= 1;
-            println!("/{} {} {}", str::from_utf8(e.name()).unwrap(), state.depth, state.prev_depth);
-            let name = String::from(str::from_utf8(e.name()).unwrap());
-            if state.prev_depth <= state.depth {
-                state.children.push(Pane::new(name));
-            } else {
-                let mut parent = Pane::new(name);
-                let children_add = state.children.split_off(0);
-                parent.push_all(children_add);
-                if is_root(state.depth) {
-                    state.root.push(parent);
+    fn handle_event<'a, B: std::io::BufRead>(&mut self, event: Event<'a>, reader: &mut Reader<B>) -> () {
+        match event {
+            Event::Start(ref _e) => {
+                self.prev_depth = self.depth.clone();
+                self.depth += 1;
+                self.commands_hierarchy.resize(self.depth + 1, Vec::new());
+            },
+            Event::Text(ref e) => {
+                self.commands_hierarchy[self.depth].push(e.unescape_and_decode(&reader).unwrap());
+            },
+            Event::End(ref e) => {
+                self.depth -= 1;
+                let name = String::from(str::from_utf8(e.name()).unwrap());
+                let mut pane = Pane::new(name);
+                pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
+                if self.prev_depth <= self.depth {
+                    self.children.push(pane);
                 } else {
-                    state.children.push(parent);
+                    let children_add = self.children.split_off(0);
+                    pane.push_all(children_add);
+                    if Parser::is_root(self.depth) {
+                        self.root.push(pane);
+                    } else {
+                        self.children.push(pane);
+                    }
                 }
-            }
-        },
-        _ => {()}
-    }
-}
-
-fn parse_into_roots<B: std::io::BufRead>(reader: &mut Reader<B>) -> () {
-    let mut buf = Vec::new();
-    let mut state = State::new();
-    loop {
-        match reader.read_event(&mut buf) {
-            Ok(Event::Eof) => break, // break loop when event at end of file
-            Ok(event) => handle_event(event, &mut state), 
-            Err(error) => panic!("Error at position {}: {:?}", reader.buffer_position(), error),
+                self.commands_hierarchy.resize(self.depth + 1, Vec::new());
+            },
+            _ => ()
         }
-        buf.clear(); // keep memory usage low
     }
 
-    let mut i = 0;
-    for x in &state.root {
-        i += 1;
-        println!("{}: {:?}", i, x);
+    pub fn parse<B: std::io::BufRead>(reader: &mut Reader<B>) -> () {
+        let mut buf = Vec::new();
+
+        let mut state = Parser::new();
+
+        loop {
+            match reader.read_event(&mut buf) {
+                Ok(Event::Eof) => break, // break loop when event at end of file
+                Ok(event) => Parser::handle_event(&mut state, event, reader), 
+                Err(error) => panic!("Error at position {}: {:?}", reader.buffer_position(), error),
+            }
+            buf.clear(); // keep memory usage low
+        }
+
+        let mut i = 0;
+        for x in &state.root {
+            i += 1;
+            println!("{}: {:?}", i, x);
+        }
     }
 }
+
 
 fn main() {
     let path = Path::new("./src/resources/test.xml");
     let mut reader = Reader::from_file(path).expect("failed to read");
     reader.trim_text(true);
-    parse_into_roots(&mut reader);
+    Parser::parse(&mut reader);
 }
