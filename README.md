@@ -6,6 +6,7 @@ Key points
 4. Depth of nesting decides type, going session/window/pane
 5. Global commands can exist
 
+```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!-- global commands work! Cascading to all sessions below -->
 echo (pwd)
@@ -19,3 +20,4 @@ echo (pwd)
     $BUILD_TOOL build
   </term>
 </work> <!-- creates a session with two windows for editing and a terminal -->
+```

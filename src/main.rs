@@ -3,10 +3,9 @@ use quick_xml::events::Event;
 
 use std::path::Path;
 use std::str;
-use std::fmt;
 
 #[derive(Debug,Clone)]
-struct Session {
+pub struct Session {
     windows: Vec<Window>,
     name: String,
 }
@@ -23,7 +22,7 @@ impl Session {
 }
 
 #[derive(Debug,Clone)]
-struct Window {
+pub struct Window {
     panes: Vec<Pane>,
     name: String,
 }
@@ -40,7 +39,7 @@ impl Window {
 }
 
 #[derive(Debug,Clone)]
-struct Pane {
+pub struct Pane {
     panes: Vec<Pane>,
     commands: Vec<String>,
     name: String
@@ -66,9 +65,9 @@ impl Pane {
 pub struct Parser {
     depth: usize,
     prev_depth: usize,
-    children: Vec<Pane>,
-    windows: Vec<Window>,
     sessions: Vec<Session>,
+    windows: Vec<Window>,
+    panes: Vec<Pane>,
     commands_hierarchy: Vec<Vec<String>>
 }
 
@@ -77,7 +76,7 @@ impl Parser {
         Parser { 
             depth: 0, 
             prev_depth: 0, 
-            children: Vec::new(), 
+            panes: Vec::new(), 
             windows: Vec::new(), 
             sessions: Vec::new(), 
             commands_hierarchy: Vec::new()
@@ -105,7 +104,7 @@ impl Parser {
                     } else if self.depth > 1 {
                         let mut pane = Pane::from(name);
                         pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
-                        self.children.push(pane);
+                        self.panes.push(pane);
                     }
                 } else {
                     if self.depth == 0 {
@@ -115,15 +114,15 @@ impl Parser {
                         self.sessions.push(session);
                     } else if self.depth == 1 {
                         let mut window = Window::from(name);
-                        let children_add = self.children.split_off(0);
-                        window.push_all(children_add);
+                        let children = self.panes.split_off(0);
+                        window.push_all(children);
                         self.windows.push(window);
                     } else if self.depth > 1 {
                         let mut pane = Pane::from(name);
-                        let children_add = self.children.split_off(0);
-                        pane.push_all(children_add);
+                        let children = self.panes.split_off(0);
+                        pane.push_all(children);
                         pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
-                        self.children.push(pane);
+                        self.panes.push(pane);
                     }
                 }
                 self.commands_hierarchy.resize(self.depth + 1, Vec::new());
@@ -132,9 +131,8 @@ impl Parser {
         }
     }
 
-    pub fn parse<B: std::io::BufRead>(reader: &mut Reader<B>) -> () {
+    pub fn parse<B: std::io::BufRead>(reader: &mut Reader<B>) -> Vec<Session> {
         let mut buf = Vec::new();
-
         let mut state = Parser::new();
 
         loop {
@@ -151,13 +149,22 @@ impl Parser {
             i += 1;
             println!("{}: {:?}", i, x);
         }
+        state.sessions
+    }
+    pub fn from_file(path: &Path) -> Vec<Session> {
+        let mut reader = Reader::from_file(path).expect("failed to read");
+        reader.trim_text(true);
+        Parser::parse(&mut reader)
+    }
+    pub fn from_string(text: &str) -> Vec<Session> {
+        let mut reader = Reader::from_str(text);
+        reader.trim_text(true);
+        Parser::parse(&mut reader)
     }
 }
 
 
 fn main() {
     let path = Path::new("./src/resources/test.xml");
-    let mut reader = Reader::from_file(path).expect("failed to read");
-    reader.trim_text(true);
-    Parser::parse(&mut reader);
+    Parser::from_file(path);
 }

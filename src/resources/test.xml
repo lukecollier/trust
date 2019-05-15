@@ -6,23 +6,26 @@
     $EDITOR
   </edit>
   <term>
-      <build>
-      </build>
-      <test>
-      </test>
     mvn --help
+    <build>
+    </build>
+    <test>
+    </test>
   </term>
 </pricing>
 <play>
-  cd ~/Project/Work
+  cd ~/Project/Learn/
   <edit>
     $EDITOR
   </edit>
   <term>
-      <build>
-      </build>
-      <test>
-        mvn test
-      </test>
+    <build>
+    </build>
+    <test>
+      mvn test
+    </test>
   </term>
+  cd ~/Project/Learn/trust
+  <trust>
+  </trust>
 </play>
