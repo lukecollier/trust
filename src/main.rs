@@ -83,6 +83,47 @@ impl Parser {
         }
     }
 
+
+    fn handle_child(&mut self, name: String) -> () {
+        match self.depth {
+            0 => self.sessions.push(Session::from(name)),
+            1 => self.windows.push(Window::from(name)),
+            _ => {
+                let mut pane = Pane::from(name);
+                pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
+                self.panes.push(pane);
+            },
+        }
+    }
+
+    fn handle_parent(&mut self, name: String) -> () {
+        match self.depth {
+            0 => { 
+                let mut session = Session::from(name);
+                let windows_add = self.windows.split_off(0);
+                session.push_all(windows_add);
+                self.sessions.push(session);
+            }, 
+            1 => {
+                let mut window = Window::from(name);
+                let children = self.panes.split_off(0);
+                window.push_all(children);
+                self.windows.push(window);
+            },
+            _ => {
+                let mut pane = Pane::from(name);
+                let children = self.panes.split_off(0);
+                pane.push_all(children);
+                pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
+                self.panes.push(pane);
+            },
+        }
+    }
+
+    fn is_on_parent(&self) -> bool {
+        self.prev_depth <= self.depth
+    }
+
     fn handle_event<'a, B: std::io::BufRead>(&mut self, event: Event<'a>, reader: &mut Reader<B>) -> () {
         match event {
             Event::Start(ref _e) => {
@@ -96,34 +137,10 @@ impl Parser {
             Event::End(ref e) => {
                 self.depth -= 1;
                 let name = String::from(str::from_utf8(e.name()).unwrap());
-                if self.prev_depth <= self.depth {
-                    if self.depth == 0 {
-                        self.sessions.push(Session::from(name));
-                    } else if self.depth == 1 {
-                        self.windows.push(Window::from(name));
-                    } else if self.depth > 1 {
-                        let mut pane = Pane::from(name);
-                        pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
-                        self.panes.push(pane);
-                    }
+                if self.is_on_parent() {
+                    self.handle_child(name);
                 } else {
-                    if self.depth == 0 {
-                        let mut session = Session::from(name);
-                        let windows_add = self.windows.split_off(0);
-                        session.push_all(windows_add);
-                        self.sessions.push(session);
-                    } else if self.depth == 1 {
-                        let mut window = Window::from(name);
-                        let children = self.panes.split_off(0);
-                        window.push_all(children);
-                        self.windows.push(window);
-                    } else if self.depth > 1 {
-                        let mut pane = Pane::from(name);
-                        let children = self.panes.split_off(0);
-                        pane.push_all(children);
-                        pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
-                        self.panes.push(pane);
-                    }
+                    self.handle_parent(name);
                 }
                 self.commands_hierarchy.resize(self.depth + 1, Vec::new());
             },
