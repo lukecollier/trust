@@ -72,8 +72,23 @@ impl Target {
 		}
 	}
 
-	pub fn to_string(session: &str, window: &str, pane: &str) -> String {
-		String::from(format!("{}:{}.{}", session, window, pane))
+	pub fn to_string(self) -> String {
+        match (self.session, self.window, self.pane) {
+            (None, None, None) => String::new(),
+            (Some(session), None, None) => String::from(session),
+            (Some(session), Some(window), None) => 
+                String::from(format!("{}:{}", session, window)),
+            (Some(session), Some(window), Some(pane)) => 
+                String::from(format!("{}:{}.{}", session, window, pane)),
+            (None, Some(window), None) => 
+                String::from(format!(":{}", window)),
+            (None, Some(window), Some(pane)) => 
+                String::from(format!(":{}.{}", window, pane)),
+            (None, None, Some(pane)) => 
+                String::from(format!(".{}", pane)),
+            (Some(session), None, Some(pane)) => 
+                String::from(format!("{}.{}", session, pane)),
+        }
 	}
 }
 
@@ -81,7 +96,7 @@ impl Target {
 pub fn send_command(target: &str, command: &str) -> Vec<u8> {
     Command::new("tmux").arg("send-keys")
         .arg("-t").arg(target)
-		.arg(format!("{} Enter", command))
+		.arg(format!("{} Enter", command.replace(" ", " Space ")))
         .output()
         .expect("failed to execute process").stdout
 }
@@ -100,7 +115,7 @@ pub fn version<'a>() -> Result<String, String> {
     }
 }
 
-pub fn has_session(name: String) -> bool {
+pub fn has_session(name: &str) -> bool {
     Command::new("tmux")
         .arg("has-session")
         .arg("-t")

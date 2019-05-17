@@ -1,7 +1,7 @@
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub struct Session {
-    windows: Vec<Window>,
-    name: String,
+    pub windows: Vec<Window>,
+    pub name: String,
 }
 impl Session {
     pub fn from(name: String) -> Session {
@@ -13,12 +13,13 @@ impl Session {
             self.windows.push(window);
         }
     }
+
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub struct Window {
-    panes: Vec<Pane>,
-    name: String,
+    pub panes: Vec<Pane>,
+    pub name: String,
 }
 impl Window {
     pub fn from(name: String) -> Window {
@@ -32,11 +33,11 @@ impl Window {
     }
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub struct Pane {
-    panes: Vec<Pane>,
-    commands: Vec<String>,
-    name: String
+    pub panes: Vec<Pane>,
+    pub commands: Vec<String>,
+    pub name: String
 }
 
 impl Pane {
