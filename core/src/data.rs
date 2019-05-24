@@ -1,11 +1,11 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Session {
     pub windows: Vec<Window>,
     pub name: String,
 }
 impl Session {
     pub fn from(name: String) -> Session {
-        Session { windows: Vec::new(), name: name }
+        Session { windows: Vec::new(), name }
     }
 
     pub fn push_all(&mut self, windows: Vec<Window>) {
@@ -16,14 +16,14 @@ impl Session {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Window {
     pub panes: Vec<Pane>,
     pub name: String,
 }
 impl Window {
     pub fn from(name: String) -> Window {
-        Window { panes: Vec::new(), name: name }
+        Window { panes: Vec::new(), name }
     }
 
     pub fn push_all(&mut self, panes: Vec<Pane>) {
@@ -33,7 +33,7 @@ impl Window {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Pane {
     pub panes: Vec<Pane>,
     pub commands: Vec<String>,
@@ -42,7 +42,7 @@ pub struct Pane {
 
 impl Pane {
     pub fn from(name: String) -> Pane {
-        Pane { panes: Vec::new(), name: name, commands: Vec::new() }
+        Pane { panes: Vec::new(), name, commands: Vec::new() }
     }
 
     pub fn push_all(&mut self, panes: Vec<Pane>) {

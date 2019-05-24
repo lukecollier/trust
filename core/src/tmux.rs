@@ -14,6 +14,13 @@ impl Direction {
 	}
 }
 
+pub fn attach_session(target: &str) -> Vec<u8> {
+    Command::new("tmux").arg("attach-session")
+        .arg("-t").arg(target)
+        .output()
+        .expect("failed to execute process").stdout
+}
+
 pub fn create_session(name: &str) -> Vec<u8> {
     Command::new("tmux").arg("new-session")
         .arg("-d")
@@ -23,10 +30,25 @@ pub fn create_session(name: &str) -> Vec<u8> {
         .expect("failed to execute process").stdout
 }
 
+pub fn list_sessions(format: &str) -> Vec<u8> {
+    Command::new("tmux").arg("list-session")
+        .arg("-F").arg(format)
+        .output()
+        .expect("failed to execute process").stdout
+}
+
 pub fn new_window(target: &str, name: &str) -> Vec<u8> {
     Command::new("tmux").arg("new-window")
         .arg("-t").arg(target)
         .arg("-n").arg(name)
+        .output()
+        .expect("failed to execute process").stdout
+}
+
+pub fn rename_window(target: &str, name: &str) -> Vec<u8> {
+    Command::new("tmux").arg("rename-window")
+        .arg("-t").arg(target)
+        .arg(name)
         .output()
         .expect("failed to execute process").stdout
 }
@@ -48,14 +70,6 @@ pub struct Target {
 }
 
 impl Target {
-	pub fn from_full(session: &str, window: &str, pane: &str) -> Target {
-		Target { 
-			session: Some(String::from(session)), 
-			window: Some(String::from(window)),
-			pane: Some(String::from(pane))
-		}
-	}
-
 	pub fn from_session_window(session: &str, window: &str) -> Target {
 		Target { 
 			session: Some(String::from(session)), 
@@ -64,30 +78,22 @@ impl Target {
 		}
 	}
 
-	pub fn from_session(session: &str) -> Target {
-		Target { 
-			session: Some(String::from(session)), 
-			window: None,
-			pane: None
-		}
-	}
-
-	pub fn to_string(self) -> String {
-        match (self.session, self.window, self.pane) {
+	pub fn to_string(&self) -> String {
+        match (&self.session, &self.window, &self.pane) {
             (None, None, None) => String::new(),
-            (Some(session), None, None) => String::from(session),
+            (Some(session), None, None) => session.to_string(),
             (Some(session), Some(window), None) => 
-                String::from(format!("{}:{}", session, window)),
+                format!("{}:{}", session, window),
             (Some(session), Some(window), Some(pane)) => 
-                String::from(format!("{}:{}.{}", session, window, pane)),
+                format!("{}:{}.{}", session, window, pane),
             (None, Some(window), None) => 
-                String::from(format!(":{}", window)),
+                format!(":{}", window),
             (None, Some(window), Some(pane)) => 
-                String::from(format!(":{}.{}", window, pane)),
+                format!(":{}.{}", window, pane),
             (None, None, Some(pane)) => 
-                String::from(format!(".{}", pane)),
+                format!(".{}", pane),
             (Some(session), None, Some(pane)) => 
-                String::from(format!("{}.{}", session, pane)),
+                format!("{}.{}", session, pane),
         }
 	}
 }
@@ -101,7 +107,7 @@ pub fn send_command(target: &str, command: &str) -> Vec<u8> {
         .expect("failed to execute process").stdout
 }
 
-pub fn version<'a>() -> Result<String, String> {
+pub fn version() -> Result<String, String> {
     let output = Command::new("tmux")
         .arg("-V")
         .output()

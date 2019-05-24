@@ -26,7 +26,7 @@ impl Parser {
         }
     }
 
-    fn handle_child(&mut self, name: String) -> () {
+    fn handle_child(&mut self, name: String) {
         match self.depth {
             0 => self.sessions.push(Session::from(name)),
             1 => self.windows.push(Window::from(name)),
@@ -38,7 +38,7 @@ impl Parser {
         }
     }
 
-    fn handle_parent(&mut self, name: String) -> () {
+    fn handle_parent(&mut self, name: String) {
         match self.depth {
             0 => { 
                 let mut session = Session::from(name);
@@ -66,10 +66,10 @@ impl Parser {
         self.prev_depth <= self.depth
     }
 
-    fn handle_event<'a, B: std::io::BufRead>(&mut self, event: Event<'a>, reader: &mut Reader<B>) -> () {
+    fn handle_event<'a, B: std::io::BufRead>(&mut self, event: Event<'a>, reader: &mut Reader<B>) {
         match event {
             Event::Start(ref _e) => {
-                self.prev_depth = self.depth.clone();
+                self.prev_depth = self.depth;
                 self.depth += 1;
                 self.commands_hierarchy.resize(self.depth + 1, Vec::new());
             },
@@ -112,9 +112,38 @@ impl Parser {
         Parser::parse(&mut reader)
     }
 
+    #[allow(dead_code)]
     pub fn from_string(text: &str) -> Vec<Session> {
         let mut reader = Reader::from_str(text);
         reader.trim_text(true);
         Parser::parse(&mut reader)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod parse {
+        use super::*;
+        #[test]
+        fn test_empty_xml() {
+            assert_eq!(Parser::from_string(""), Vec::new());
+        }
+
+        #[test]
+        fn test_singular_xml() {
+            assert_eq!(Parser::from_string("<base></base>"), vec![Session::from("base".to_string())]);
+        }
+
+        #[test]
+        fn test_multiple_xml() {
+            let expected =vec![
+                Session::from("one".to_string()),
+                Session::from("two".to_string()),
+            ];
+            assert_eq!(Parser::from_string("<one></one><two></two>"), expected);
+        }
+    }
+
 }
