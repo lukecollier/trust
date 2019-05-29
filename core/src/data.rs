@@ -14,6 +14,9 @@ impl Session {
         }
     }
 
+    pub fn push(&mut self, window: Window) {
+        self.windows.push(window);
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -30,6 +33,10 @@ impl Window {
         for pane in panes {
             self.panes.push(pane);
         }
+    }
+
+    pub fn push(&mut self, pane: Pane) {
+        self.panes.push(pane);
     }
 }
 
@@ -51,9 +58,15 @@ impl Pane {
         }
     }
 
+    pub fn push(&mut self, pane: Pane) {
+        self.panes.push(pane);
+    }
+
     pub fn commands(&mut self, commands: Vec<String>) {
         for command in commands {
             self.commands.push(command);
         }
     }
+
 }
+// todo define iterator for pane that get's all children 

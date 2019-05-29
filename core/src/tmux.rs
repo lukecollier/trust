@@ -21,11 +21,17 @@ pub fn attach_session(target: &str) -> Vec<u8> {
         .expect("failed to execute process").stdout
 }
 
-pub fn create_session(name: &str) -> Vec<u8> {
-    Command::new("tmux").arg("new-session")
-        .arg("-d")
-        .arg("-s")
-        .arg(name)
+pub fn switch_client(target: &str) -> Vec<u8> {
+    Command::new("tmux").arg("switch-session")
+        .arg("-t").arg(target)
+        .output()
+        .expect("failed to execute process").stdout
+}
+
+pub fn create_session(name: &str, window_name: &str) -> Vec<u8> {
+    Command::new("tmux").arg("new-session").arg("-d")
+        .arg("-s").arg(name)
+        .arg("-n").arg(window_name)
         .output()
         .expect("failed to execute process").stdout
 }
@@ -63,18 +69,38 @@ pub fn split_window(target: &str, direction: Direction) -> Vec<u8> {
 }
 
 
+#[derive(Debug, Clone)]
 pub struct Target {
 	session: Option<String>,
 	window: Option<String>,
 	pane: Option<String>
 }
 
+// todo target should be replaced with a push / pop format upto 3 entries
+// we can then validate target is using authorized tmux formats
 impl Target {
-	pub fn from_session_window(session: &str, window: &str) -> Target {
+    pub fn new() -> Target {
+        Target { session: None, window: None, pane: None }
+    }
+
+    pub fn push(&mut self, name: &str) -> &mut Self {
+        if self.session == None {
+            self.session = Some(String::from(name));
+        } else if self.window == None {
+            self.window = Some(String::from(name));
+        } else if self.pane == None {
+            self.pane = Some(String::from(name));
+        } else {
+            panic!("Attempted to push to full target");
+        }
+        self
+    }
+
+	pub fn from(session: &str, window: &str, pane: &str) -> Target {
 		Target { 
 			session: Some(String::from(session)), 
 			window: Some(String::from(window)),
-			pane: None
+			pane: Some(String::from(pane))
 		}
 	}
 
@@ -98,7 +124,8 @@ impl Target {
 	}
 }
 
-// <session>:<window>.<pane>
+// todo: impl a tmux error that is a wrapper on the stderr
+
 pub fn send_command(target: &str, command: &str) -> Vec<u8> {
     Command::new("tmux").arg("send-keys")
         .arg("-t").arg(target)
@@ -128,16 +155,4 @@ pub fn has_session(name: &str) -> bool {
         .arg(name)
         .output()
         .expect("failed to execute process").status.success()
-}
-
-#[cfg(test)]
-mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
-
-    #[test]
-    fn tmux_version_on_path() {
-        assert_eq!(version(), Ok(String::from("tmux 2.9")));
-    }
-
 }

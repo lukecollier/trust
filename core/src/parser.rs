@@ -74,6 +74,15 @@ impl Parser {
                 self.commands_hierarchy.resize(self.depth + 1, Vec::new());
             },
             Event::Text(ref e) => {
+                let decoded_command = e.unescape_and_decode(&reader).unwrap();
+                for pane in &mut self.panes {
+                    pane.commands.push(decoded_command.clone());
+                };
+                for window in &mut self.windows {
+                    for pane in &mut window.panes {
+                        pane.commands.push(decoded_command.clone());
+                    }
+                };
                 self.commands_hierarchy[self.depth]
                     .push(e.unescape_and_decode(&reader).unwrap());
             },
@@ -143,6 +152,21 @@ mod tests {
                 Session::from("two".to_string()),
             ];
             assert_eq!(Parser::from_string("<one></one><two></two>"), expected);
+        }
+        #[test]
+        fn test_can_have_retro_active_commands() {
+            let mut session = Session::from("session".to_string());
+            let mut window = Window::from("window".to_string());
+            let mut pane = Pane::from("pane".to_string());
+
+            pane.commands.push(String::from("command_one"));
+            pane.commands.push(String::from("command_two"));
+            window.push(pane);
+            session.push(window);
+            let expected =vec![
+                session
+            ];
+            assert_eq!(Parser::from_string("<session>command_one\n<window><pane></pane></window>\ncommand_two\n</session>"), expected);
         }
     }
 

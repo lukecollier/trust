@@ -1,4 +1,5 @@
-use crate::runner::Runner;
+use crate::runner::TmuxIO;
+use crate::tmux::*;
 use dirs;
 
 mod tmux;
@@ -14,7 +15,11 @@ fn main() {
             path.push("sessions");
             path.set_extension("xml");
             let parsed = parser::Parser::from_file(path.as_path());
-            Runner::from(parsed).run();
+            for session in parsed {
+                if !has_session(&session.name) {
+                    session.unsafe_run(&mut Target::new()).unwrap();
+                }
+            }
             println!("using config {}", path.as_path().display());
         },
         None => panic!("Could not get home directory"),
