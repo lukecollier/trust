@@ -13,6 +13,15 @@ impl TmuxIO for Session {
         create_session(&self.name, &first_window_name);
         let mut new_target = target.clone();
         let name = new_target.push(&self.name);
+        if !self.windows.is_empty() {
+            let mut first_window_name = target.clone();
+            first_window_name.push(&self.name);
+            first_window_name.push(&self.windows.first().unwrap().name);
+            for command in &self.commands {
+                send_command(&first_window_name.to_string(), &command).expect("failed to send");
+                send_command(&first_window_name.to_string(), "Enter").expect("failed to send");
+            }
+        }
         if self.windows.len() > 1 {
             for n in 1..self.windows.len() {
                 self.windows[n].unsafe_run(name).unwrap();
@@ -43,6 +52,10 @@ impl TmuxIO for Window {
                 new_pane_target.push(&pane_id);
                 self.panes[n].unsafe_run(&mut new_pane_target).unwrap();
             }
+        }
+        for command in &self.commands {
+            send_command(&name.to_string(), &command).expect("failed to send");
+            send_command(&name.to_string(), "Enter").expect("failed to send");
         }
         select_layout(&name.to_string(), &self.layout.to_string());
         Ok(())

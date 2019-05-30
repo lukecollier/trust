@@ -34,8 +34,16 @@ impl Parser {
 
     fn handle_leaf(&mut self, name: String) {
         match self.depth {
-            0 => self.sessions.push(Session::from(name)),
-            1 => self.windows.push(Window::from(name, self.layout())),
+            0 => {
+                let mut session = Session::from(name);
+                session.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
+                self.sessions.push(session);
+            },
+            1 => {
+                let mut window = Window::from(name, self.layout());
+                window.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
+                self.windows.push(window);
+            },
             2 => {
                 let mut pane = Pane::from(name);
                 pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
@@ -51,12 +59,14 @@ impl Parser {
                 let mut session = Session::from(name);
                 let windows_add = self.windows.split_off(0);
                 session.push_all(windows_add);
+                session.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
                 self.sessions.push(session);
             }, 
             1 => {
                 let mut window = Window::from(name, self.layout());
                 let children = self.panes.split_off(0);
                 window.push_all(children);
+                window.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
                 self.windows.push(window);
             },
             _ => panic!("Cannot nest panes, support for this was dropped in alpha")
@@ -165,6 +175,23 @@ mod tests {
         #[test]
         fn test_self_closing_singular() {
             assert_eq!(Parser::from_string("<base/>"), vec![Session::from("base".to_string())]);
+        }
+
+        #[test]
+        fn test_session_can_have_commands() {
+            let mut session = Session::from("session".to_string());
+            session.commands(vec![String::from("test command")]);
+            assert_eq!(Parser::from_string("<session>test command</session>"), vec![session]);
+        }
+
+        #[test]
+        fn test_window_can_have_commands() {
+            let mut session = Session::from("session".to_string());
+            let mut window = Window::from("window".to_string(), Layout::EvenVertical);
+            session.commands(vec![String::from("session command")]);
+            window.commands(vec![String::from("session command"), String::from("test command")]); 
+            session.push_all(vec![window]);
+            assert_eq!(Parser::from_string("<session>session command<window>test command</window></session>"), vec![session]);
         }
 
         #[test]

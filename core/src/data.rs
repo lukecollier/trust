@@ -2,15 +2,22 @@
 pub struct Session {
     pub windows: Vec<Window>,
     pub name: String,
+    pub commands: Vec<String>,
 }
 impl Session {
     pub fn from(name: String) -> Session {
-        Session { windows: Vec::new(), name }
+        Session { windows: Vec::new(), name, commands: Vec::new() }
     }
 
     pub fn push_all(&mut self, windows: Vec<Window>) {
         for window in windows {
             self.windows.push(window);
+        }
+    }
+
+    pub fn commands(&mut self, commands: Vec<String>) {
+        for command in commands {
+            self.commands.push(command);
         }
     }
 }
@@ -49,17 +56,24 @@ impl Layout {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Window {
     pub panes: Vec<Pane>,
+    pub commands: Vec<String>,
     pub name: String,
     pub layout: Layout
 }
 impl Window {
     pub fn from(name: String, layout: Layout) -> Window {
-        Window { panes: Vec::new(), name, layout }
+        Window { panes: Vec::new(), name, layout, commands: Vec::new() }
     }
 
     pub fn push_all(&mut self, panes: Vec<Pane>) {
         for pane in panes {
             self.panes.push(pane);
+        }
+    }
+
+    pub fn commands(&mut self, commands: Vec<String>) {
+        for command in commands {
+            self.commands.push(command);
         }
     }
 }

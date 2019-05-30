@@ -61,8 +61,6 @@ pub struct Target {
 	pane: Option<String>
 }
 
-// todo target should be replaced with a push / pop format upto 3 entries
-// we can then validate target is using authorized tmux formats
 impl Target {
     pub fn new() -> Target {
         Target { session: None, window: None, pane: None }
@@ -108,8 +106,6 @@ impl Target {
         }
 	}
 }
-
-// todo: impl a tmux error that is a wrapper on the stderr
 
 pub fn send_command(target: &str, command: &str) -> Result<String, String> {
     let output = Command::new("tmux").arg("send-keys")
