@@ -1,19 +1,6 @@
 use std::process::Command;
 use std::str;
 
-pub enum Direction {
-    Horizontal, Vertical
-}
-
-impl Direction {
-	fn to_flag(&self) -> String {
-		match self {
-			Direction::Horizontal => String::from("-h"),
-			Direction::Vertical => String::from("-v"),
-		}
-	}
-}
-
 pub fn attach_session(target: &str) -> Vec<u8> {
     Command::new("tmux").arg("attach-session")
         .arg("-t").arg(target)
@@ -51,18 +38,16 @@ pub fn new_window(target: &str, name: &str) -> Vec<u8> {
         .expect("failed to execute process").stdout
 }
 
-pub fn rename_window(target: &str, name: &str) -> Vec<u8> {
-    Command::new("tmux").arg("rename-window")
+pub fn select_layout(target: &str, layout: &str) -> Vec<u8> {
+    Command::new("tmux").arg("select-layout")
         .arg("-t").arg(target)
-        .arg(name)
+        .arg(layout)
         .output()
         .expect("failed to execute process").stdout
 }
 
-
-pub fn split_window(target: &str, direction: Direction) -> Vec<u8> {
+pub fn split_window(target: &str) -> Vec<u8> {
     Command::new("tmux").arg("split-window")
-		.arg(direction.to_flag())
         .arg("-t").arg(target)
         .output()
         .expect("failed to execute process").stdout
@@ -126,12 +111,19 @@ impl Target {
 
 // todo: impl a tmux error that is a wrapper on the stderr
 
-pub fn send_command(target: &str, command: &str) -> Vec<u8> {
-    Command::new("tmux").arg("send-keys")
+pub fn send_command(target: &str, command: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("send-keys")
         .arg("-t").arg(target)
-		.arg(format!("{} Enter", command.replace(" ", " Space ")))
+		.arg(command)
         .output()
-        .expect("failed to execute process").stdout
+        .expect("failed to execute process");
+    if output.status.success() {
+        let out = str::from_utf8(&output.stdout).unwrap();
+        Ok(String::from(out.trim()))
+    } else {
+        let err = str::from_utf8(&output.stderr).unwrap();
+        Err(String::from(err.trim()))
+    }
 }
 
 pub fn version() -> Result<String, String> {

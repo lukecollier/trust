@@ -13,9 +13,36 @@ impl Session {
             self.windows.push(window);
         }
     }
+}
 
-    pub fn push(&mut self, window: Window) {
-        self.windows.push(window);
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Layout {
+    EvenHorizontal,
+    EvenVertical,
+    MainHorizontal,
+    MainVertical,
+    Tiled,
+}
+impl Layout {
+    pub fn from(string: &str) -> Result<Layout, String> {
+        match string {
+            "even-horizontal" => Ok(Layout::EvenHorizontal),
+            "even-vertical" => Ok(Layout::EvenVertical),
+            "main-horizontal" => Ok(Layout::MainHorizontal),
+            "main-vertical" => Ok(Layout::MainVertical),
+            "tiled" => Ok(Layout::Tiled),
+            _ => Err(format!("{} is not a valid layout", string)),
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            Layout::EvenHorizontal => String::from("even-horizontal"),
+            Layout::EvenVertical => String::from("even-vertical"),
+            Layout::MainHorizontal => String::from("main-horizontal"),
+            Layout::MainVertical => String::from("main-vertical"),
+            Layout::Tiled => String::from("tiled"),
+        }
     }
 }
 
@@ -23,10 +50,11 @@ impl Session {
 pub struct Window {
     pub panes: Vec<Pane>,
     pub name: String,
+    pub layout: Layout
 }
 impl Window {
-    pub fn from(name: String) -> Window {
-        Window { panes: Vec::new(), name }
+    pub fn from(name: String, layout: Layout) -> Window {
+        Window { panes: Vec::new(), name, layout }
     }
 
     pub fn push_all(&mut self, panes: Vec<Pane>) {
@@ -34,32 +62,17 @@ impl Window {
             self.panes.push(pane);
         }
     }
-
-    pub fn push(&mut self, pane: Pane) {
-        self.panes.push(pane);
-    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Pane {
-    pub panes: Vec<Pane>,
     pub commands: Vec<String>,
     pub name: String
 }
 
 impl Pane {
     pub fn from(name: String) -> Pane {
-        Pane { panes: Vec::new(), name, commands: Vec::new() }
-    }
-
-    pub fn push_all(&mut self, panes: Vec<Pane>) {
-        for pane in panes {
-            self.panes.push(pane);
-        }
-    }
-
-    pub fn push(&mut self, pane: Pane) {
-        self.panes.push(pane);
+        Pane { name, commands: Vec::new() }
     }
 
     pub fn commands(&mut self, commands: Vec<String>) {

@@ -64,4 +64,8 @@ XML has fallen out of favour, but I think carries strong qualities for this kind
 Good way to learn rust
 ### quick\_xml
 Incredibly fast xml parsing with a nice event based output
+
+
+## Changes
+- panes can no longer be nested
  

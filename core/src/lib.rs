@@ -1,5 +1,6 @@
 pub mod tmux;
-mod parser;
+pub mod parser;
+pub mod runner;
 mod data;
 
 pub fn get_session_names() -> Vec<String> {

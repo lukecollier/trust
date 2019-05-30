@@ -5,3 +5,7 @@ authors = ["Luke Collier <leccollier@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+
+core = { path = "../core" }
+dirs = "1.0.5"
+structopt = "0.2"

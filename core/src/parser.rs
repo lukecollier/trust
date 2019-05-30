@@ -3,9 +3,10 @@ use quick_xml::events::Event;
 use std::path::Path;
 use std::str;
 
-use crate::data::{Session, Window, Pane};
+use crate::data::{Session, Window, Pane, Layout};
 
 pub struct Parser {
+    layout: Option<Layout>,
     depth: usize,
     prev_depth: usize,
     sessions: Vec<Session>,
@@ -17,6 +18,7 @@ pub struct Parser {
 impl Parser {
     fn new() -> Parser {
         Parser { 
+            layout: None,
             depth: 0, 
             prev_depth: 0, 
             panes: Vec::new(), 
@@ -26,19 +28,24 @@ impl Parser {
         }
     }
 
-    fn handle_child(&mut self, name: String) {
+    fn layout(&self) -> Layout {
+        self.layout.clone().unwrap_or(Layout::EvenVertical)
+    }
+
+    fn handle_leaf(&mut self, name: String) {
         match self.depth {
             0 => self.sessions.push(Session::from(name)),
-            1 => self.windows.push(Window::from(name)),
-            _ => {
+            1 => self.windows.push(Window::from(name, self.layout())),
+            2 => {
                 let mut pane = Pane::from(name);
                 pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
                 self.panes.push(pane);
             },
+            _ => panic!("Cannot nest panes, support for this was dropped in alpha")
         }
     }
 
-    fn handle_parent(&mut self, name: String) {
+    fn handle_node(&mut self, name: String) {
         match self.depth {
             0 => { 
                 let mut session = Session::from(name);
@@ -47,52 +54,62 @@ impl Parser {
                 self.sessions.push(session);
             }, 
             1 => {
-                let mut window = Window::from(name);
+                let mut window = Window::from(name, self.layout());
                 let children = self.panes.split_off(0);
                 window.push_all(children);
                 self.windows.push(window);
             },
-            _ => {
-                let mut pane = Pane::from(name);
-                let children = self.panes.split_off(0);
-                pane.push_all(children);
-                pane.commands(self.commands_hierarchy.clone().into_iter().flatten().collect());
-                self.panes.push(pane);
-            },
+            _ => panic!("Cannot nest panes, support for this was dropped in alpha")
         }
     }
 
-    fn is_on_parent(&self) -> bool {
+    fn is_on_node(&self) -> bool {
         self.prev_depth <= self.depth
     }
 
     fn handle_event<'a, B: std::io::BufRead>(&mut self, event: Event<'a>, reader: &mut Reader<B>) {
         match event {
-            Event::Start(ref _e) => {
+            Event::Start(ref e) => {
+                for attr in e.attributes() {
+                    let unwrapped = attr.unwrap();
+                    if unwrapped.key == b"layout" {
+                        let layout_value = unwrapped.unescape_and_decode_value(&reader).unwrap();
+                        match Layout::from(&layout_value) {
+                            Ok(res) => self.layout = Some(res),
+                            Err(err) => panic!(err),
+                        };
+                    }
+                }
                 self.prev_depth = self.depth;
                 self.depth += 1;
                 self.commands_hierarchy.resize(self.depth + 1, Vec::new());
             },
+            Event::Empty(ref e) => {
+                for attr in e.attributes() {
+                    let unwrapped = attr.unwrap();
+                    if unwrapped.key == b"layout" {
+                        let layout_value = unwrapped.unescape_and_decode_value(&reader).unwrap();
+                        match Layout::from(&layout_value) {
+                            Ok(res) => self.layout = Some(res),
+                            Err(err) => panic!(err),
+                        };
+                    }
+                }
+                self.prev_depth = self.depth + 1;
+                let name = String::from(str::from_utf8(e.name()).unwrap());
+                self.handle_leaf(name);
+            },
             Event::Text(ref e) => {
                 let decoded_command = e.unescape_and_decode(&reader).unwrap();
-                for pane in &mut self.panes {
-                    pane.commands.push(decoded_command.clone());
-                };
-                for window in &mut self.windows {
-                    for pane in &mut window.panes {
-                        pane.commands.push(decoded_command.clone());
-                    }
-                };
-                self.commands_hierarchy[self.depth]
-                    .push(e.unescape_and_decode(&reader).unwrap());
+                self.commands_hierarchy[self.depth].push(decoded_command);
             },
             Event::End(ref e) => {
                 self.depth -= 1;
                 let name = String::from(str::from_utf8(e.name()).unwrap());
-                if self.is_on_parent() {
-                    self.handle_child(name);
+                if self.is_on_node() {
+                    self.handle_leaf(name);
                 } else {
-                    self.handle_parent(name);
+                    self.handle_node(name);
                 }
                 self.commands_hierarchy.resize(self.depth + 1, Vec::new());
             },
@@ -136,13 +153,55 @@ mod tests {
     mod parse {
         use super::*;
         #[test]
-        fn test_empty_xml() {
+        fn test_empty() {
             assert_eq!(Parser::from_string(""), Vec::new());
         }
 
         #[test]
-        fn test_singular_xml() {
+        fn test_singular() {
             assert_eq!(Parser::from_string("<base></base>"), vec![Session::from("base".to_string())]);
+        }
+
+        #[test]
+        fn test_self_closing_singular() {
+            assert_eq!(Parser::from_string("<base/>"), vec![Session::from("base".to_string())]);
+        }
+
+        #[test]
+        fn test_window_self_closing_can_have_layout() {
+            let mut session = Session::from(String::from("session"));
+            let window = Window::from(String::from("window"), Layout::MainVertical);
+            session.push_all(vec![window]);
+            assert_eq!(Parser::from_string("<session><window layout=\"main-vertical\"/></session>"), vec![session]);
+        }
+
+        #[test]
+        fn test_window_can_have_layout() {
+            let mut session = Session::from(String::from("session"));
+            let window = Window::from(String::from("window"), Layout::MainHorizontal);
+            session.push_all(vec![window]);
+            assert_eq!(Parser::from_string("<session><window layout=\"main-horizontal\"></window></session>"), vec![session]);
+        }
+
+        #[test]
+        #[should_panic]
+        fn test_panics_on_unknown_layout() {
+            let mut session = Session::from(String::from("session"));
+            let window = Window::from(String::from("window"), Layout::MainHorizontal);
+            session.push_all(vec![window]);
+            assert_eq!(Parser::from_string("<session><window layout=\"wrong\"></window></session>"), vec![session]);
+        }
+
+        #[test]
+        fn test_self_closing_multiple_panes() {
+            let mut session = Session::from(String::from("session"));
+            let mut window = Window::from(String::from("window"), Layout::EvenVertical);
+            let pane_one = Pane::from(String::from("pane_one"));
+            let pane_two = Pane::from(String::from("pane_two"));
+            window.push_all(vec![pane_one, pane_two]);
+            session.push_all(vec![window]);
+            let expected = vec![session];
+            assert_eq!(Parser::from_string("<session><window><pane_one/><pane_two/></window></session>"), expected);
         }
 
         #[test]
@@ -153,20 +212,11 @@ mod tests {
             ];
             assert_eq!(Parser::from_string("<one></one><two></two>"), expected);
         }
-        #[test]
-        fn test_can_have_retro_active_commands() {
-            let mut session = Session::from("session".to_string());
-            let mut window = Window::from("window".to_string());
-            let mut pane = Pane::from("pane".to_string());
 
-            pane.commands.push(String::from("command_one"));
-            pane.commands.push(String::from("command_two"));
-            window.push(pane);
-            session.push(window);
-            let expected =vec![
-                session
-            ];
-            assert_eq!(Parser::from_string("<session>command_one\n<window><pane></pane></window>\ncommand_two\n</session>"), expected);
+        #[test]
+        #[should_panic]
+        fn test_cannot_nest_panes() {
+            assert_eq!(Parser::from_string("<session><window><pane><one></one></two></two></pane></window></session>"), Vec::new());
         }
     }
 
