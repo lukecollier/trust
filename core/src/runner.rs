@@ -17,7 +17,8 @@ impl TmuxIO for Session {
             let mut first_window_name = target.clone();
             first_window_name.push(&self.name);
             first_window_name.push(&self.windows.first().unwrap().name);
-            for command in &self.commands {
+            let window_commands = &self.windows.first().unwrap().commands;
+            for command in window_commands {
                 send_command(&first_window_name.to_string(), &command).expect("failed to send");
                 send_command(&first_window_name.to_string(), "Enter").expect("failed to send");
             }

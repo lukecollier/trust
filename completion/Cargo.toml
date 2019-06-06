@@ -1,10 +1,16 @@
 [package]
-name = "completion"
+name = "trust_completion"
 version = "0.1.0"
 authors = ["Luke Collier <leccollier@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "Completions for trust tmux management"
+keywords = ["tmux", "management", "cli", "completions"]
+categories = ["command-line-utilities"]
+homepage = "https://www.lukecollier.dev"
+repository = "https://github.com/lukecollier/trust"
 
 [dependencies]
 
 colored = "1.8"
-core = { path = "../core" }
+trust_core = { path = "../core", version = "0.1.0" }

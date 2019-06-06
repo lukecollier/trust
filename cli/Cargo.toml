@@ -1,11 +1,17 @@
 [package]
-name = "cli"
+name = "trust_cli"
 version = "0.1.0"
 authors = ["Luke Collier <leccollier@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "A tool for managing tmux sessions using XML"
+keywords = ["tmux", "management", "cli"]
+categories = ["command-line-utilities"]
+homepage = "https://www.lukecollier.dev"
+repository = "https://github.com/lukecollier/trust"
 
 [dependencies]
 
-core = { path = "../core" }
+trust_core = { path = "../core", version = "0.1.0" }
 dirs = "1.0.5"
 structopt = "0.2"

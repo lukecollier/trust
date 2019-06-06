@@ -1,8 +1,14 @@
 [package]
-name = "core"
+name = "trust_core"
 version = "0.1.0"
 authors = ["Luke Collier <leccollier@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "A libarary for interacting with tmux"
+keywords = ["tmux", "process"]
+categories = ["library"]
+homepage = "https://www.lukecollier.dev"
+repository = "https://github.com/lukecollier/trust"
 
 [dependencies]
 quick-xml = "0.14.0"

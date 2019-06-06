@@ -115,15 +115,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cli"
-version = "0.1.0"
-dependencies = [
- "core 0.1.0",
- "dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "structopt 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -141,25 +132,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "completion"
-version = "0.1.0"
-dependencies = [
- "colored 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "core 0.1.0",
-]
-
-[[package]]
 name = "constant_time_eq"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "core"
-version = "0.1.0"
-dependencies = [
- "dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "quick-xml 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "derive_more"
@@ -469,6 +444,31 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "unicode-width 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "trust_cli"
+version = "0.1.0"
+dependencies = [
+ "dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "structopt 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trust_core 0.1.0",
+]
+
+[[package]]
+name = "trust_completion"
+version = "0.1.0"
+dependencies = [
+ "colored 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "trust_core 0.1.0",
+]
+
+[[package]]
+name = "trust_core"
+version = "0.1.0"
+dependencies = [
+ "dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quick-xml 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

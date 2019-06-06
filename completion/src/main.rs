@@ -1,5 +1,5 @@
-use core::tmux::*;
-use core::get_session_names;
+use trust_core::tmux::*;
+use trust_core::get_session_names;
 use std::str::from_utf8;
 
 fn main() {

@@ -1,6 +1,6 @@
-use core::runner::TmuxIO;
-use core::tmux::{Target, has_session};
-use core::parser::{Parser};
+use trust_core::runner::TmuxIO;
+use trust_core::tmux::{Target, has_session};
+use trust_core::parser::{Parser};
 use dirs::{home_dir};
 
 use structopt::StructOpt;

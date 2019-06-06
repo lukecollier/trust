@@ -160,91 +160,88 @@ impl Parser {
 mod tests {
     use super::*;
 
-    mod parse {
-        use super::*;
-        #[test]
-        fn test_empty() {
-            assert_eq!(Parser::from_string(""), Vec::new());
-        }
+    #[test]
+    fn test_empty() {
+        assert_eq!(Parser::from_string(""), Vec::new());
+    }
 
-        #[test]
-        fn test_singular() {
-            assert_eq!(Parser::from_string("<base></base>"), vec![Session::from("base".to_string())]);
-        }
+    #[test]
+    fn test_singular() {
+        assert_eq!(Parser::from_string("<base></base>"), vec![Session::from("base".to_string())]);
+    }
 
-        #[test]
-        fn test_self_closing_singular() {
-            assert_eq!(Parser::from_string("<base/>"), vec![Session::from("base".to_string())]);
-        }
+    #[test]
+    fn test_self_closing_singular() {
+        assert_eq!(Parser::from_string("<base/>"), vec![Session::from("base".to_string())]);
+    }
 
-        #[test]
-        fn test_session_can_have_commands() {
-            let mut session = Session::from("session".to_string());
-            session.commands(vec![String::from("test command")]);
-            assert_eq!(Parser::from_string("<session>test command</session>"), vec![session]);
-        }
+    #[test]
+    fn test_session_can_have_commands() {
+        let mut session = Session::from("session".to_string());
+        session.commands(vec![String::from("test command")]);
+        assert_eq!(Parser::from_string("<session>test command</session>"), vec![session]);
+    }
 
-        #[test]
-        fn test_window_can_have_commands() {
-            let mut session = Session::from("session".to_string());
-            let mut window = Window::from("window".to_string(), Layout::EvenVertical);
-            session.commands(vec![String::from("session command")]);
-            window.commands(vec![String::from("session command"), String::from("test command")]); 
-            session.push_all(vec![window]);
-            assert_eq!(Parser::from_string("<session>session command<window>test command</window></session>"), vec![session]);
-        }
+    #[test]
+    fn test_window_can_have_commands() {
+        let mut session = Session::from("session".to_string());
+        let mut window = Window::from("window".to_string(), Layout::EvenVertical);
+        session.commands(vec![String::from("session command")]);
+        window.commands(vec![String::from("session command"), String::from("test command")]); 
+        session.push_all(vec![window]);
+        assert_eq!(Parser::from_string("<session>session command<window>test command</window></session>"), vec![session]);
+    }
 
-        #[test]
-        fn test_window_self_closing_can_have_layout() {
-            let mut session = Session::from(String::from("session"));
-            let window = Window::from(String::from("window"), Layout::MainVertical);
-            session.push_all(vec![window]);
-            assert_eq!(Parser::from_string("<session><window layout=\"main-vertical\"/></session>"), vec![session]);
-        }
+    #[test]
+    fn test_window_self_closing_can_have_layout() {
+        let mut session = Session::from(String::from("session"));
+        let window = Window::from(String::from("window"), Layout::MainVertical);
+        session.push_all(vec![window]);
+        assert_eq!(Parser::from_string("<session><window layout=\"main-vertical\"/></session>"), vec![session]);
+    }
 
-        #[test]
-        fn test_window_can_have_layout() {
-            let mut session = Session::from(String::from("session"));
-            let window = Window::from(String::from("window"), Layout::MainHorizontal);
-            session.push_all(vec![window]);
-            assert_eq!(Parser::from_string("<session><window layout=\"main-horizontal\"></window></session>"), vec![session]);
-        }
+    #[test]
+    fn test_window_can_have_layout() {
+        let mut session = Session::from(String::from("session"));
+        let window = Window::from(String::from("window"), Layout::MainHorizontal);
+        session.push_all(vec![window]);
+        assert_eq!(Parser::from_string("<session><window layout=\"main-horizontal\"></window></session>"), vec![session]);
+    }
 
-        #[test]
-        #[should_panic]
-        fn test_panics_on_unknown_layout() {
-            let mut session = Session::from(String::from("session"));
-            let window = Window::from(String::from("window"), Layout::MainHorizontal);
-            session.push_all(vec![window]);
-            assert_eq!(Parser::from_string("<session><window layout=\"wrong\"></window></session>"), vec![session]);
-        }
+    #[test]
+    #[should_panic]
+    fn test_panics_on_unknown_layout() {
+        let mut session = Session::from(String::from("session"));
+        let window = Window::from(String::from("window"), Layout::MainHorizontal);
+        session.push_all(vec![window]);
+        assert_eq!(Parser::from_string("<session><window layout=\"wrong\"></window></session>"), vec![session]);
+    }
 
-        #[test]
-        fn test_self_closing_multiple_panes() {
-            let mut session = Session::from(String::from("session"));
-            let mut window = Window::from(String::from("window"), Layout::EvenVertical);
-            let pane_one = Pane::from(String::from("pane_one"));
-            let pane_two = Pane::from(String::from("pane_two"));
-            window.push_all(vec![pane_one, pane_two]);
-            session.push_all(vec![window]);
-            let expected = vec![session];
-            assert_eq!(Parser::from_string("<session><window><pane_one/><pane_two/></window></session>"), expected);
-        }
+    #[test]
+    fn test_self_closing_multiple_panes() {
+        let mut session = Session::from(String::from("session"));
+        let mut window = Window::from(String::from("window"), Layout::EvenVertical);
+        let pane_one = Pane::from(String::from("pane_one"));
+        let pane_two = Pane::from(String::from("pane_two"));
+        window.push_all(vec![pane_one, pane_two]);
+        session.push_all(vec![window]);
+        let expected = vec![session];
+        assert_eq!(Parser::from_string("<session><window><pane_one/><pane_two/></window></session>"), expected);
+    }
 
-        #[test]
-        fn test_multiple_xml() {
-            let expected =vec![
-                Session::from("one".to_string()),
-                Session::from("two".to_string()),
-            ];
-            assert_eq!(Parser::from_string("<one></one><two></two>"), expected);
-        }
+    #[test]
+    fn test_multiple_xml() {
+        let expected =vec![
+            Session::from("one".to_string()),
+            Session::from("two".to_string()),
+        ];
+        assert_eq!(Parser::from_string("<one></one><two></two>"), expected);
+    }
 
-        #[test]
-        #[should_panic]
-        fn test_cannot_nest_panes() {
-            assert_eq!(Parser::from_string("<session><window><pane><one></one></two></two></pane></window></session>"), Vec::new());
-        }
+    #[test]
+    #[should_panic]
+    fn test_cannot_nest_panes() {
+        assert_eq!(Parser::from_string("<session><window><pane><one></one></two></two></pane></window></session>"), Vec::new());
     }
 
 }
