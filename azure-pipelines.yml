@@ -1,0 +1,20 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: docker login -u $(dockerId) -p $(pswd)
+  displayName: 'Login to docker'
+- script: docker build -t test-container .
+  displayName: 'Build test'
+  
+
+- script: |
+    docker run test-container
+    echo Add other tasks to build, test, and deploy your project.
+    echo See https://aka.ms/yaml
+  displayName: 'Run tests'
+
+  # todo: another script here to produce a home brew tap 
