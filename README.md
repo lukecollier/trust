@@ -1,5 +1,10 @@
 # Status
-[Active Development]
+[![Build Status](https://dev.azure.com/leccollier/trust/_apis/build/status/lukecollier.trust?branchName=master)](https://dev.azure.com/leccollier/trust/_build/latest?definitionId=1&branchName=master)
+
+[active]
+
+# Next Milestone
+CI/CD
 
 # Example 
 Key points
