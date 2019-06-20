@@ -10,7 +10,7 @@ impl TmuxIO for Session {
         let default_window = Window::from(String::from("default"), Layout::EvenVertical);
         let first_window_name = &self.windows.first()
             .unwrap_or(&default_window).name;
-        create_session(&self.name, &first_window_name);
+        create_session(&self.name, &first_window_name).expect("Could not create session");
         let mut new_target = target.clone();
         let name = new_target.push(&self.name);
         if !self.windows.is_empty() {
@@ -34,7 +34,7 @@ impl TmuxIO for Session {
 
 impl TmuxIO for Window {
     fn unsafe_run(&self, target: &mut Target) -> Result<(), &str> {
-        new_window(&target.to_string(), &self.name);
+        new_window(&target.to_string(), &self.name).expect("failed to create new window");
         let mut new_target = target.clone();
         let name = new_target.push(&self.name);
         if self.panes.len() > 0 {
@@ -48,7 +48,7 @@ impl TmuxIO for Window {
                 let split_pane_id = (n).to_string();
                 let mut pane_target = name.clone();
                 pane_target.push(&split_pane_id);
-                split_window(&pane_target.to_string());
+                split_window(&pane_target.to_string()).expect("failed to split window");
                 let mut new_pane_target = name.clone();
                 new_pane_target.push(&pane_id);
                 self.panes[n].unsafe_run(&mut new_pane_target).unwrap();
@@ -58,7 +58,7 @@ impl TmuxIO for Window {
             send_command(&name.to_string(), &command).expect("failed to send");
             send_command(&name.to_string(), "Enter").expect("failed to send");
         }
-        select_layout(&name.to_string(), &self.layout.to_string());
+        select_layout(&name.to_string(), &self.layout.to_string()).expect("could not change layout");
         Ok(())
     }
 }

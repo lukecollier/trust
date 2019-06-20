@@ -1,56 +1,93 @@
-use std::process::Command;
+use std::process::{Command, Output};
 use std::str;
 
-pub fn attach_session(target: &str) -> Vec<u8> {
-    Command::new("tmux").arg("attach-session")
+pub fn kill_session(target: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("kill-session")
         .arg("-t").arg(target)
         .output()
-        .expect("failed to execute process").stdout
+        .expect("failed to execute process");
+    handle_output(output)
 }
 
-pub fn switch_client(target: &str) -> Vec<u8> {
-    Command::new("tmux").arg("switch-session")
-        .arg("-t").arg(target)
-        .output()
-        .expect("failed to execute process").stdout
-}
-
-pub fn create_session(name: &str, window_name: &str) -> Vec<u8> {
-    Command::new("tmux").arg("new-session").arg("-d")
+pub fn create_session(name: &str, window_name: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("new-session").arg("-d")
         .arg("-s").arg(name)
         .arg("-n").arg(window_name)
         .output()
-        .expect("failed to execute process").stdout
+        .expect("failed to execute process");
+    handle_output(output)
 }
 
-pub fn list_sessions(format: &str) -> Vec<u8> {
-    Command::new("tmux").arg("list-session")
+pub fn list_sessions(format: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("list-session")
         .arg("-F").arg(format)
         .output()
-        .expect("failed to execute process").stdout
+        .expect("failed to execute process");
+    handle_output(output)
 }
 
-pub fn new_window(target: &str, name: &str) -> Vec<u8> {
-    Command::new("tmux").arg("new-window")
+pub fn new_window(target: &str, name: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("new-window")
         .arg("-t").arg(target)
         .arg("-n").arg(name)
         .output()
-        .expect("failed to execute process").stdout
+        .expect("failed to execute process");
+    handle_output(output)
 }
 
-pub fn select_layout(target: &str, layout: &str) -> Vec<u8> {
-    Command::new("tmux").arg("select-layout")
+pub fn select_layout(target: &str, layout: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("select-layout")
         .arg("-t").arg(target)
         .arg(layout)
         .output()
-        .expect("failed to execute process").stdout
+        .expect("failed to execute process");
+    handle_output(output)
 }
 
-pub fn split_window(target: &str) -> Vec<u8> {
-    Command::new("tmux").arg("split-window")
+pub fn split_window(target: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("split-window")
         .arg("-t").arg(target)
         .output()
-        .expect("failed to execute process").stdout
+        .expect("failed to execute process");
+     
+    handle_output(output)
+}
+
+fn handle_output(output: Output) -> Result<String, String> {
+    if output.status.success() {
+        let out = str::from_utf8(&output.stdout).unwrap();
+        Ok(String::from(out.trim()))
+    } else {
+        let err = str::from_utf8(&output.stderr).unwrap();
+        Err(String::from(err.trim()))
+    }
+}
+
+
+pub fn send_command(target: &str, command: &str) -> Result<String, String> {
+    let output = Command::new("tmux").arg("send-keys")
+        .arg("-t").arg(target)
+		.arg(command)
+        .output()
+        .expect("failed to execute process");
+    handle_output(output)
+}
+
+pub fn version() -> Result<String, String> {
+    let output = Command::new("tmux")
+        .arg("-V")
+        .output()
+        .expect("failed to execute process");
+    handle_output(output)
+}
+
+pub fn has_session(name: &str) -> bool {
+    Command::new("tmux")
+        .arg("has-session")
+        .arg("-t")
+        .arg(name)
+        .output()
+        .expect("failed to execute process").status.success()
 }
 
 
@@ -105,42 +142,4 @@ impl Target {
                 format!("{}.{}", session, pane),
         }
 	}
-}
-
-pub fn send_command(target: &str, command: &str) -> Result<String, String> {
-    let output = Command::new("tmux").arg("send-keys")
-        .arg("-t").arg(target)
-		.arg(command)
-        .output()
-        .expect("failed to execute process");
-    if output.status.success() {
-        let out = str::from_utf8(&output.stdout).unwrap();
-        Ok(String::from(out.trim()))
-    } else {
-        let err = str::from_utf8(&output.stderr).unwrap();
-        Err(String::from(err.trim()))
-    }
-}
-
-pub fn version() -> Result<String, String> {
-    let output = Command::new("tmux")
-        .arg("-V")
-        .output()
-        .expect("failed to execute process");
-    if output.status.success() {
-        let out = str::from_utf8(&output.stdout).unwrap();
-        Ok(String::from(out.trim()))
-    } else {
-        let err = str::from_utf8(&output.stderr).unwrap();
-        Err(String::from(err.trim()))
-    }
-}
-
-pub fn has_session(name: &str) -> bool {
-    Command::new("tmux")
-        .arg("has-session")
-        .arg("-t")
-        .arg(name)
-        .output()
-        .expect("failed to execute process").status.success()
 }
