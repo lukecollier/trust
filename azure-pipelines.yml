@@ -6,8 +6,8 @@ pool:
 
 steps:
 - script: |
-  sudo localectl set-locale LANG=en_CA.UTF-8
-  docker build -t test-container .
+    sudo localectl set-locale LANG=en_CA.UTF-8
+    docker build -t test-container .
   displayName: 'Build test'
   
 
