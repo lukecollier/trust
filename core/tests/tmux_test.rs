@@ -42,16 +42,27 @@ fn tmux_can_select_layout() {
 }
 
 #[test]
-fn tmux_errors_when_layout_doesnt_exist() {
+fn tmux_can_split_window() {
     assert_eq!(create_session("target_six", "first_window"), Ok(String::from("")));
-    assert_eq!(select_layout("target_six", "does-not-exist"), 
-               Err(String::from("can\'t set layout: does-not-exist")));
+    assert_eq!(split_window("target_six"), Ok(String::from("")));
     assert_eq!(kill_session("target_six"), Ok(String::from("")));
 }
 
 #[test]
-fn tmux_can_split_window() {
+fn tmux_can_send_command() {
     assert_eq!(create_session("target_seven", "first_window"), Ok(String::from("")));
-    assert_eq!(split_window("target_seven:first_window"), Ok(String::from("")));
+    assert_eq!(send_command("target_seven:first_window", "echo \"test\""), Ok(String::from("")));
     assert_eq!(kill_session("target_seven"), Ok(String::from("")));
+}
+
+#[test]
+fn tmux_can_have_session() {
+    assert_eq!(create_session("target_eight", "first_window"), Ok(String::from("")));
+    assert_eq!(has_session("target_eight"), true);
+    assert_eq!(kill_session("target_eight"), Ok(String::from("")));
+}
+
+#[test]
+fn tmux_can_not_have_session() {
+    assert_eq!(has_session("target_nine"), false);
 }
