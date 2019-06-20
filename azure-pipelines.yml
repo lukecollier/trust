@@ -5,12 +5,13 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: docker build -t test-container .
+- script: |
+  sudo localectl set-locale LANG=en_CA.UTF-8
+  docker build -t test-container .
   displayName: 'Build test'
   
 
 - script: |
-    apt install locales-all
     docker run test-container
   displayName: 'Run tests'
 
