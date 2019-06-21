@@ -2,7 +2,11 @@ use trust_core::tmux::*;
 
 #[test]
 fn tmux_version_on_path() {
-    assert_eq!(version(), Ok(String::from("tmux 2.9")));
+    let result = match version() {
+        Ok(_) => true,
+        Err(_) => false
+    };
+    assert!(result);
 }
 
 
@@ -14,8 +18,13 @@ fn tmux_can_create_and_kill_with_duplicates() {
 
 #[test]
 fn tmux_can_create_and_kill_with_errors() {
-    assert_eq!(kill_session("target_two"), 
-               Err(String::from("can\'t find session: target_two")));
+    create_session("stay_open", "first_window").expect("created");
+    let result = match kill_session("target_two") {
+        Ok(_) => false,
+        Err(_) => true
+    };
+    kill_session("stay_open").expect("could not kill");
+    assert!(result);
 }
 
 #[test]
