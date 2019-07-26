@@ -447,24 +447,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "trust_cli"
+name = "trust"
 version = "0.1.0"
 dependencies = [
  "dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "structopt 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)",
- "trust_core 0.1.0",
+ "trust-core 0.1.0",
 ]
 
 [[package]]
-name = "trust_completion"
+name = "trust-completion"
 version = "0.1.0"
 dependencies = [
  "colored 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "trust_core 0.1.0",
+ "trust-core 0.1.0",
 ]
 
 [[package]]
-name = "trust_core"
+name = "trust-core"
 version = "0.1.0"
 dependencies = [
  "dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",

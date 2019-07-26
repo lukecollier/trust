@@ -46,7 +46,9 @@ fn main() {
                         session.unsafe_run(&mut Target::new()).unwrap();
                     }
                 }
-                println!("using config {}", path.as_path().display());
+                if opt.debug {
+                    println!("[DEBUG] using config {}", path.as_path().display());
+                }
             },
             None => panic!("Could not get home directory"),
         }
@@ -60,7 +62,9 @@ fn main() {
                     session.unsafe_run(&mut Target::new()).unwrap();
                 }
             }
-            println!("using config {}", &path.display());
+            if opt.debug {
+                println!("[DEBUG] using config {}", &path.display());
+            }
         } else {
             panic!("Could not find config file");
         }

@@ -1,5 +1,5 @@
 [package]
-name = "trust_cli"
+name = "trust"
 version = "0.1.0"
 authors = ["Luke Collier <leccollier@gmail.com>"]
 edition = "2018"
@@ -12,6 +12,6 @@ repository = "https://github.com/lukecollier/trust"
 
 [dependencies]
 
-trust_core = { path = "../core", version = "0.1.0" }
+trust-core = { path = "../core", version = "0.1.0" }
 dirs = "1.0.5"
 structopt = "0.2"
