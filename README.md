@@ -4,7 +4,8 @@
 [active]
 
 # Next Milestone
-CI/CD
+- [x] CI/CD
+- [ ] brew
 
 # Example 
 Key points
@@ -28,6 +29,33 @@ echo | pwd
     $BUILD_TOOL build
   </term>
 </work> <!-- creates a session with two windows for editing and a terminal -->
+```
+
+heres a handy script for calling trust and connecting isntantly
+```shell
+function t {
+  echo $TERM
+  local project session
+  if [[ -n $1 ]]; then
+    project=$1
+  else
+    project=$(basename "${$(pwd)//[.]/-}")
+  fi
+
+  session=$(tmux ls -F '#{session_name}' | grep $project)
+
+  if [[ -n $session ]]; then
+    if [[ -n $TMUX ]]; then
+      tmux switch-client -t $session
+    else
+      tmux attach-session -t $session
+    fi
+    return
+  else
+    echo "starting new session"
+    trust $project | tmux attach-session -t "$session"
+  fi
+}
 ```
 
 # Interface

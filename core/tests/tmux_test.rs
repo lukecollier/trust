@@ -9,7 +9,6 @@ fn tmux_version_on_path() {
     assert!(result);
 }
 
-
 #[test]
 fn tmux_can_create_and_kill_with_duplicates() {
     assert_eq!(create_session("target_one", "first_window"), Ok(String::from("")));
