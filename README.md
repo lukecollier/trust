@@ -1,11 +1,7 @@
-# Status
-[![Build Status](https://dev.azure.com/leccollier/trust/_apis/build/status/lukecollier.trust?branchName=master)](https://dev.azure.com/leccollier/trust/_build/latest?definitionId=1&branchName=master)
-
-[active]
-
 # Next Milestone
-- [x] CI/CD
-- [ ] brew
+- [ ] Rewrite
+- [ ] CI/CD Packaged on github packages
+- [ ] Brew release
 
 # Example 
 Key points
@@ -31,35 +27,8 @@ echo | pwd
 </work> <!-- creates a session with two windows for editing and a terminal -->
 ```
 
-heres a handy script for calling trust and connecting isntantly
-```shell
-function t {
-  echo $TERM
-  local project session
-  if [[ -n $1 ]]; then
-    project=$1
-  else
-    project=$(basename "${$(pwd)//[.]/-}")
-  fi
+So what happens with the above? Well it evaluates from top to bottom, the commands are replicated in every sub tree of the format. This opens the door to be able to share environment variables with certain windows.
 
-  session=$(tmux ls -F '#{session_name}' | grep $project)
-
-  if [[ -n $session ]]; then
-    if [[ -n $TMUX ]]; then
-      tmux switch-client -t $session
-    else
-      tmux attach-session -t $session
-    fi
-    return
-  else
-    echo "starting new session"
-    trust $project | tmux attach-session -t "$session"
-  fi
-}
-```
-
-# Interface
-The interface aims to be minimal with useful flags available for most commands
 ## Commands
 trust \[-a\] (start all sessions)
 trust <session> (start and connect to session if available)
@@ -74,11 +43,12 @@ trust —-list or trust -l (shows all sessions in a list)
 # Roadmap
 1. CLI Session Management (with benchmarks)
 2. Put on homebrew 
-3. Fast low profile tab completion (must be in the ns of speed cost)
-4. Tmux module changed to external lib
-5. Tmux module published to crate.io
+3. Tab completion
 
 # Features RFC
+- Plugins
+
+
 - Allow for specifying pwd in attributes 
 ```xml 
 <root pwd="~/path/to/thing"></root>
@@ -87,17 +57,14 @@ trust —-list or trust -l (shows all sessions in a list)
 ```xml 
 <root ENV_VAR="Hello">echo $ENV_VAR</root>
 ```
-- Compiling / serializing the xml into a binary format for quicker access, this might not be too useful though given the speed at which the fast\_xml crate parses. The idea here would allow you too install multiple config files to a compiled conf
-
 
 # Justifications
 ## XML
-XML has fallen out of favour, but I think carries strong qualities for this kind of thing. I personally find it easier to read for UI and the encapsulating nature lends itself well to hierarchies.
+XML has fallen out of favor, but I think carries strong qualities for this kind of thing. I personally find it easier to read for UI and the encapsulating nature lends itself well to hierarchies.
 ## Rust
 Good way to learn rust
 ### quick\_xml
 Incredibly fast xml parsing with a nice event based output
-
 
 ## Changes
 - panes can no longer be nested
