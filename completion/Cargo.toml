@@ -13,4 +13,4 @@ repository = "https://github.com/lukecollier/trust"
 [dependencies]
 
 colored = "1.8"
-trust-core = { path = "../core", version = "0.1.0" }
+core = { path = "../core", version = "0.1.0" }

@@ -1,5 +1,5 @@
 [package]
-name = "trust-core"
+name = "core"
 version = "0.1.0"
 authors = ["Luke Collier <leccollier@gmail.com>"]
 edition = "2018"
