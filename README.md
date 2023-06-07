@@ -47,6 +47,9 @@ trust —-list or trust -l (shows all sessions in a list)
 
 # Features RFC
 - Plugins
+- Save current state
+- Apply config state
+- Diff current state with config state then apply
 
 
 - Allow for specifying pwd in attributes 
