@@ -1,8 +1,9 @@
-pub mod tmux;
+mod data;
 pub mod parser;
 pub mod runner;
-mod data;
+pub mod tmux;
 
+// new destination for parsing and everything
 pub fn get_session_names() -> Vec<String> {
     match dirs::home_dir() {
         Some(mut path) => {
@@ -12,7 +13,7 @@ pub fn get_session_names() -> Vec<String> {
             path.set_extension("xml");
             let parsed = parser::Parser::from_file(path.as_path());
             parsed.into_iter().map(|session| session.name).collect()
-        },
+        }
         None => Vec::new(),
     }
 }

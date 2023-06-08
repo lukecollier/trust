@@ -5,6 +5,15 @@ use std::str;
 
 use crate::data::{Layout, Pane, Session, Window};
 
+// todo: The parser should just run the commands from the stack as it reads for effective
+// efficiency, and super simplicity
+// can emulate the act of a declararitve method by following the tree if it already exists and
+// where it deviates BRINGING IT INLINE. At the pane level that would entail killing, then
+// restarting the pain with whatever the command buffer is!
+//
+// Wowee I feel I've grown as an engineer revisiting this
+// For perf reasons we should grab the current state of tmux in it's ENTIRETY and use that for
+// comparisons as we stream the XML
 pub struct Parser {
     layout: Option<Layout>,
     depth: usize,

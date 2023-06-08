@@ -51,12 +51,49 @@ trust —-list or trust -l (shows all sessions in a list)
 - Apply config state
 - Diff current state with config state then apply
 
+- Allow height, and width with different units and auto resizing
+```xml 
+<window_one>
+    <pane_one width="100px">
+     //blah
+    </pane_one>
+    <pane_two width="auto", height="auto"
+     //blah
+    </pane_two>
+</window_one>
+``` 
+with the above we can default height and width to auto, which means _my parent layout should decide my size_.
+This means parents have logical layouts they can choose, will look into if HTML has any terms to ~steal~ borrow.
+This is a pretty hard problem, and CCS solves it best so will look into how that all works.
+Key would be to _keep it logical and keep it simple!_ with the above example we get to pane\_one and place it first requiring it has a 100px width, the height is auto so we make it take up the current remaining space.
+With the next pane we do the same only now we're operating in the reduce screen size of `screen-width - 100px` so we can use the `wh` units from CSS to do this well 
 
-- Allow for specifying pwd in attributes 
+
+- nice errors if the desired set-up is not possible
+```xml 
+<window_one>
+    <pane_one width="100px", height="100px">
+     //blah
+    </pane_one>
+    <pane_two>
+     //blah
+    </pane_two>
+</window_one>
+
+--> 
+
+[ERROR] Not enough space for <pane_two> to be placed!
+
+hint: You can add another pane and the formatter will be able to organise a _best guess_
+```
+
+- fun one is we already have a serialized format for the data, could allow teams to share common dev set ups + commands... if we fail we can report back the failures 
+
+- syntax sugar for `cd` using attributes
 ```xml 
 <root pwd="~/path/to/thing"></root>
 ```
-- env variables set as attributes seems cool too
+- syntax sugar for `export ENV=some_thing` using attributes
 ```xml 
 <root ENV_VAR="Hello">echo $ENV_VAR</root>
 ```
