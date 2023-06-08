@@ -1,5 +1,5 @@
 # Next Milestone
-- [ ] Rewrite
+- [ ] Refactor
 - [ ] CI/CD Packaged on github packages
 - [ ] Brew release
 
